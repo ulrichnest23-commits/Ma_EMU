@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Ma Boutique</title>
+    <style>
+        .cart-drawer { transition: transform 0.3s; }
+        .cart-hidden { transform: translateX(100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow p-4 sticky top-0 z-50 flex justify-between items-center">
+   <a href="#" class="text-2xl font-black text-blue-700 cursor-pointer">
+    EMU ELECTRONIC
+</a>
+        <button onclick="toggleCart()" class="relative p-2">
+            <i class="fa-solid fa-cart-shopping text-2xl"></i>
+            <span id="cart-count" class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+        </button>
+    </nav>
+
+    <main class="container mx-auto p-8">
+        <h2 class="text-2xl font-bold mb-8">Nos Articles</h2>
+        <div id="product-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    </main>
+
+    <div id="cart-overlay" onclick="toggleCart()" class="fixed inset-0 bg-black/50 z-[60] hidden"></div>
+    <div id="cart-drawer" class="fixed right-0 top-0 h-full w-80 bg-white z-[70] cart-drawer cart-hidden shadow-xl p-6 flex flex-col">
+        <h3 class="text-xl font-bold mb-4">Panier</h3>
+        <div id="cart-items" class="flex-grow overflow-y-auto space-y-4"></div>
+        <div class="border-t pt-4 mt-4">
+            <p class="flex justify-between font-bold text-lg mb-4">Total: <span id="cart-total">0 FCFA</span></p>
+            <button onclick="sendToWhatsApp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold">Commander sur WhatsApp</button>
+        </div>
+    </div>
+<footer class="bg-white border-t mt-20 pt-10 pb-6">
+    <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
+        
+        <div>
+            <h4 class="font-bold text-lg mb-4 text-indigo-700">À PROPOS</h4>
+            <p class="text-gray-600 text-sm leading-relaxed">
+                <strong>EMU ELECTRONIC</strong> est votre boutique de référence pour les gadgets high-tech et accessoires de mode. Nous sélectionnons les meilleurs produits pour vous garantir qualité et durabilité.
+            </p>
+        </div>
+
+        <div>
+            <h4 class="font-bold text-lg mb-4 text-indigo-700">NOUS TROUVER</h4>
+            <ul class="text-gray-600 text-sm space-y-3">
+                <li class="flex items-start gap-2">
+                    <i class="fa-solid fa-location-dot mt-1 text-indigo-500"></i>
+                    <span>Boutique physique à Yaoundé,<br>Face au marché central</span>
+                </li>
+                <li class="flex items-center gap-2">
+                    <i class="fa-solid fa-phone text-indigo-500"></i>
+                    <span>+237 695745936 
+                          +237 693352516
+                    </span>
+                </li>
+            </ul>
+        </div>
+
+        <div>
+            <h4 class="font-bold text-lg mb-4 text-indigo-700">HORAIRES</h4>
+            <ul class="text-gray-600 text-sm space-y-1">
+                <li class="flex justify-between"><span>Lundi - Samedi :</span> <span>08h00 - 19h00</span></li>
+                <li class="flex justify-between"><span>Dimanche :</span> <span class="text-red-500">Fermé</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="border-t mt-10 pt-6 text-center text-gray-400 text-xs">
+        <p>&copy; 2026 EMU ELECTRONIC. Tous droits réservés.</p>
+    </div>
+</footer> 
+    <script>
+        const products = [
+    { id: 1, name: "Montre Quartz", price: 15000, img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500", isNew: true, description: "Étanche jusqu'à 30m, bracelet en cuir véritable. Garantie 6 mois.", stock: 5},
+    { id: 2, name: "Écouteurs", price: 25000, img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500", isNew: false, description: "Étanche jusqu'à 3m, coussinets bien souples, confort au rdv. Garantie 3 mois.", stock: 14},
+    { id: 3, name: "Sac Urban", price: 18000, img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500", isNew: true, description: "Étanche, manche très souple. Garantie 5 mois.", stock: 8 },
+    { id: 4, name: "Rose Claire", price: 8000, img: "Rose Claire.png", isNew: true, description: "Décoration intérieur", stock: 2 }
+];
+
+        let cart = [];
+        const NUMERO_WA = "237695745936"; // Mon numero
+
+     function render() {
+    const grid = document.getElementById('product-grid');
+    if(!grid) return;
+
+    let htmlContenu = "";
+
+    products.forEach(p => {
+        // --- GESTION DU STOCK ET DES COULEURS ---
+        let couleurStock = "text-green-600"; // Par défaut Vert
+        let messageStock = "En stock: " + p.stock;
+
+        if (p.stock <= 3) {
+            couleurStock = "text-red-600 font-bold"; // Rouge si petit stock
+        }
+        
+        if (p.stock <= 0) {
+            messageStock = "Rupture de stock";
+        }
+
+        // --- GÉNÉRATION DU HTML ---
+        htmlContenu += `
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative">
+            
+            ${p.isNew ? '<span class="absolute top-2 left-2 bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full z-10">NOUVEAU</span>' : ''}
+            
+            <img src="${p.img}" class="w-full h-40 object-cover rounded-xl mb-4">
+            
+            <h4 class="font-bold text-gray-800">${p.name}</h4>
+            <p class="text-gray-400 text-xs mb-2">${p.description}</p>
+            
+            <div class="flex justify-between items-center mt-4">
+                <span class="text-indigo-700 font-black">${p.price.toLocaleString()} F</span>
+                
+                <span class="text-[11px] ${couleurStock}">
+                    <i class="fa-solid fa-box"></i> ${messageStock}
+                </span>
+            </div>
+            
+            <button onclick="addToCart(${p.id})" class="w-full bg-gray-900 text-white mt-4 py-2 rounded-lg hover:bg-indigo-600 transition">
+                Ajouter
+            </button>
+        </div>
+        `;
+    });
+
+    grid.innerHTML = htmlContenu;
+}
+
+        function addToCart(id) {
+            cart.push(products.find(p => p.id === id));
+            updateUI();
+        }
+
+        function updateUI() {
+    document.getElementById('cart-count').innerText = cart.length;
+    
+    const container = document.getElementById('cart-items');
+    
+    if (cart.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-10">Votre panier est vide.</p>';
+    } else {
+        container.innerHTML = cart.map((item, index) => `
+            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div class="flex items-center gap-3">
+                    <img src="${item.img}" class="w-10 h-10 object-cover rounded shadow-sm">
+                    <div>
+                        <p class="font-bold text-xs text-gray-800">${item.name}</p>
+                        <p class="text-indigo-600 font-bold text-[10px]">${item.price.toLocaleString()} F</p>
+                    </div>
+                </div>
+                <button onclick="removeItem(${index})" class="text-red-400 hover:text-red-600 p-2 transition">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    document.getElementById('cart-total').innerText = total.toLocaleString() + " FCFA";
+}
+function removeItem(index) {
+    // On retire 1 élément à la position 'index'
+    cart.splice(index, 1);
+    
+    // On met à jour l'affichage immédiatement
+    updateUI();
+}
+
+        function toggleCart() {
+            document.getElementById('cart-drawer').classList.toggle('cart-hidden');
+            document.getElementById('cart-overlay').classList.toggle('hidden');
+        }
+
+        function sendToWhatsApp() {
+            if(cart.length === 0) return alert("Panier vide");
+            let msg = "Bonjour, je veux commander :\n" + cart.map(i => "- " + i.name).join("\n");
+            window.open("https://wa.me/" + NUMERO_WA + "?text=" + encodeURIComponent(msg));
+        }
+
+        window.onload = render;
+    </script>
+</body>
+</html>
